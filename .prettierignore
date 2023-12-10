@@ -1,0 +1,16 @@
+# don't format dependencies or package files
+node_modules
+package-lock.json
+package.json
+
+# don't format build artifcats
+build
+
+# don't format any hidden files
+.*
+
+# don't format the typescript configuration
+tsconfig.json
+
+# don't format the README
+README.md

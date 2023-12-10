@@ -1,0 +1,9 @@
+{
+  "extends": ["airbnb", "airbnb-typescript", "prettier"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "rules": {
+    "@typescript-eslint/lines-between-class-members": "off"
+  }
+}
