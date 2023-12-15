@@ -3,35 +3,44 @@ import EventEmitter from 'events';
 // the states of our state machine
 export type TState =
   | { kind: 'start' }
-  | { kind: 'waitingForExtension'; prompt: string }
   | { kind: 'waitingForTaskExecution' }
   | { kind: 'waitingForModelResponse' }
-  | { kind: 'waitingForUserResponse' };
+  | { kind: 'waitingForUserResponse' }
+  | { kind: 'done' };
 
 // the parameters needed to execute a task
 export interface IExecutePayload {
-  extension: string;
-  endpoint: string;
+  method: string;
   args: Record<string, any>;
 }
 
 // the kinds of effects our state machine can produce
 export type TEffect =
-  | { kind: 'requestModel'; prompt: string; extension: string }
+  | { kind: 'requestModel'; prompt: string }
   | { kind: 'requestUser'; request: string }
-  | { kind: 'getExtension'; prompt: string }
-  | { kind: 'executeTask'; request: IExecutePayload };
+  | {
+      kind: 'executeTask';
+      request: IExecutePayload;
+      refMap: Record<string, (...args: any[]) => any>;
+    }
+  | { kind: 'quit' };
 
 // the kinds of responses we expect from the model
 export type TModelResponse =
-  | { kind: 'execute'; data: IExecutePayload }
+  | {
+      kind: 'execute';
+      data: IExecutePayload;
+    }
   | { kind: 'respond'; data: string };
 
 // the kinds of messages in our state machine
 export type TMessage =
-  | { kind: 'modelResponse'; response: TModelResponse }
+  | {
+      kind: 'modelResponse';
+      response: TModelResponse;
+      refMap: Record<string, (...args: any[]) => any>;
+    }
   | { kind: 'userResponse'; response: string }
-  | { kind: 'getExtensionResponse'; response: string }
   | { kind: 'executeTaskResponse'; response: string };
 
 // the types of our events

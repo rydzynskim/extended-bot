@@ -6,7 +6,8 @@
     "lint": "npx eslint .",
     "prettier": "npx prettier --write .",
     "build": "npx tsc",
-    "dev": "npx tsc && node ./build/index.js"
+    "dev": "npx tsc && node ./build/index.js",
+    "typecheck": "npx tsc --noEmit"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.52.0",
@@ -21,7 +22,7 @@
     "@types/event-emitter": "^0.3.3",
     "axios": "^1.5.0",
     "event-emitter": "^0.3.5",
-    "openai": "^4.5.0",
+    "openai": "^4.21.0",
     "tiktoken": "^1.0.10"
   }
 }

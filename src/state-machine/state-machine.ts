@@ -1,5 +1,5 @@
-import { askModel } from './inference';
-import { executeTask, getExtension, waitForUserInput } from './helpers';
+import { TTool, askModel, getAllTools } from '../model';
+import { waitForUserInput } from '../helpers';
 import {
   TEffect,
   TStateMachineEvents,
@@ -8,18 +8,27 @@ import {
   TypedEventEmitter,
 } from './types';
 
-export async function effectRunner(
+async function effectRunner(
   effect: TEffect,
   emitter: TypedEventEmitter<TStateMachineEvents>
 ): Promise<void> {
   switch (effect.kind) {
     case 'requestModel': {
+      // get all the available tools
+      const toolInformation = getAllTools();
+      const refMap: Record<string, (...args: any[]) => any> = {};
+      const tools: TTool[] = [];
+      Object.values(toolInformation).forEach((entry) => {
+        refMap[entry.tool.function.name] = entry.ref;
+        tools.push(entry.tool);
+      });
+
       // request the inference model
-      const answer = await askModel(effect.prompt, effect.extension);
+      const answer = await askModel(effect.prompt, tools, 0);
 
       emitter.emit(
         'message',
-        { kind: 'modelResponse', response: answer },
+        { kind: 'modelResponse', response: answer, refMap },
         emitter
       );
       break;
@@ -36,32 +45,25 @@ export async function effectRunner(
         );
       }
       break;
-    case 'getExtension':
-      {
-        // get the available extension from the extension server
-        const extension = await getExtension(effect.prompt);
-
-        emitter.emit(
-          'message',
-          { kind: 'getExtensionResponse', response: extension },
-          emitter
-        );
-      }
-      break;
     case 'executeTask': {
       // tell the extension server to do something
-      const result = await executeTask(effect.request);
+      const result = await effect.refMap[effect.request.method](
+        effect.request.args
+      );
 
       emitter.emit(
         'message',
         { kind: 'executeTaskResponse', response: result },
         emitter
       );
+      break;
     }
+    case 'quit':
+      process.exit(0);
   }
 }
 
-export function update(
+function update(
   state: TState,
   message: TMessage
 ): { state: TState; effects: TEffect[] } {
@@ -70,30 +72,12 @@ export function update(
       if (message.kind === 'userResponse') {
         return {
           state: {
-            kind: 'waitingForExtension',
-            prompt: message.response,
+            kind: 'waitingForModelResponse',
           },
           effects: [
             {
-              kind: 'getExtension',
-              prompt: message.response,
-            },
-          ],
-        };
-      } else {
-        throw new Error(
-          `Invalid message: ${message.kind} for state: ${state.kind}`
-        );
-      }
-    case 'waitingForExtension':
-      if (message.kind === 'getExtensionResponse') {
-        return {
-          state: { kind: 'waitingForModelResponse' },
-          effects: [
-            {
               kind: 'requestModel',
-              prompt: state.prompt,
-              extension: message.response,
+              prompt: message.response,
             },
           ],
         };
@@ -121,7 +105,11 @@ export function update(
             return {
               state: { kind: 'waitingForTaskExecution' },
               effects: [
-                { kind: 'executeTask', request: message.response.data },
+                {
+                  kind: 'executeTask',
+                  request: message.response.data,
+                  refMap: message.refMap,
+                },
               ],
             };
           case 'respond':
@@ -139,14 +127,45 @@ export function update(
       }
     case 'waitingForUserResponse':
       if (message.kind === 'userResponse') {
+        if (message.response === 'quit') {
+          return { state: { kind: 'done' }, effects: [{ kind: 'quit' }] };
+        }
         return {
-          state: { kind: 'waitingForExtension', prompt: message.response },
-          effects: [{ kind: 'getExtension', prompt: message.response }],
+          state: { kind: 'waitingForModelResponse' },
+          effects: [{ kind: 'requestModel', prompt: message.response }],
         };
       } else {
         throw new Error(
           `Invalid message: ${message.kind} for state: ${state.kind}`
         );
       }
+    case 'done':
+      return { state: { kind: 'done' }, effects: [] };
   }
+}
+
+export async function run(): Promise<void> {
+  // setup our message handler
+  let state: TState = { kind: 'start' };
+  function messageHandler(
+    message: TMessage,
+    emitter: TypedEventEmitter<TStateMachineEvents>
+  ): void {
+    const result = update(state, message);
+    for (const effect of result.effects) {
+      emitter.emit('effect', effect, emitter);
+    }
+    state = result.state;
+  }
+
+  // create event emitter instance and attach listeners
+  const emitter = new TypedEventEmitter<TStateMachineEvents>();
+  emitter.on('message', messageHandler);
+  emitter.on('effect', effectRunner);
+
+  // wait for user prompt and start the state machine
+  const initialPrompt = await waitForUserInput(
+    'Hi, welcome to the extend chatbot. How can I help you today?'
+  );
+  messageHandler({ kind: 'userResponse', response: initialPrompt }, emitter);
 }
