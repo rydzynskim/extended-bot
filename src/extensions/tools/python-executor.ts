@@ -1,7 +1,7 @@
-import { BaseExtension } from '../base-extension';
-import { IMethod } from '../types';
 import { access, writeFile, unlink } from 'node:fs/promises';
 import { resolve } from 'path';
+import { BaseExtension } from '../base-extension';
+import { IMethod } from '../types';
 import { execAsync } from '../../helpers/exec';
 
 export class PythonExecutor extends BaseExtension {
@@ -10,6 +10,7 @@ export class PythonExecutor extends BaseExtension {
    *
    * @returns the stdout as a result of running the code
    */
+  // eslint-disable-next-line class-methods-use-this
   public async executePython(input: { code: string }): Promise<string> {
     const deleteFileIfExists = async (path: string): Promise<void> => {
       // Check if the file exists

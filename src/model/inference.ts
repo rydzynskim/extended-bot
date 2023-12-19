@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { TModelResponse } from '../state-machine';
+import { TModelResponse } from '../state-machine/types';
 import { TTool } from './types';
 
 const prePrompt =
@@ -16,7 +16,7 @@ export async function askModel(
     return { kind: 'respond', data: 'Error: Model unable to ' };
   }
   // get our open ai key from environment vars
-  const openai = new OpenAI({ apiKey: process.env['OPENAI_API_KEY'] });
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   // query the llm
   const answer = await openai.chat.completions.create({
@@ -44,7 +44,7 @@ export async function askModel(
 
   // if model didn't specify a message or tools retry
   if (typeof message.tool_calls === 'undefined') {
-    return askModel(prompt, tools, (attempt += 1));
+    return askModel(prompt, tools, attempt + 1);
   }
 
   // otherwise parse the tool call

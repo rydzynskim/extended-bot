@@ -65,6 +65,7 @@ async function effectRunner(
       break;
     }
     case 'quit':
+    default:
       process.exit(0);
   }
 }
@@ -87,25 +88,24 @@ function update(
             },
           ],
         };
-      } else {
-        throw new Error(
-          `Invalid message: ${message.kind} for state: ${state.kind}`
-        );
       }
+      throw new Error(
+        `Invalid message: ${message.kind} for state: ${state.kind}`
+      );
     case 'waitingForTaskExecution': {
       if (message.kind === 'executeTaskResponse') {
         return {
           state: { kind: 'waitingForUserResponse' },
           effects: [{ kind: 'requestUser', request: message.response }],
         };
-      } else {
-        throw new Error(
-          `Invalid message: ${message.kind} for state: ${state.kind}`
-        );
       }
+      throw new Error(
+        `Invalid message: ${message.kind} for state: ${state.kind}`
+      );
     }
     case 'waitingForModelResponse':
       if (message.kind === 'modelResponse') {
+        // eslint-disable-next-line default-case
         switch (message.response.kind) {
           case 'execute':
             return {
@@ -126,11 +126,10 @@ function update(
               ],
             };
         }
-      } else {
-        throw new Error(
-          `Invalid message: ${message.kind} for state: ${state.kind}`
-        );
       }
+      throw new Error(
+        `Invalid message: ${message.kind} for state: ${state.kind}`
+      );
     case 'waitingForUserResponse':
       if (message.kind === 'userResponse') {
         if (message.response === 'quit') {
@@ -140,12 +139,13 @@ function update(
           state: { kind: 'waitingForModelResponse' },
           effects: [{ kind: 'requestModel', prompt: message.response }],
         };
-      } else {
-        throw new Error(
-          `Invalid message: ${message.kind} for state: ${state.kind}`
-        );
       }
+      throw new Error(
+        `Invalid message: ${message.kind} for state: ${state.kind}`
+      );
+
     case 'done':
+    default:
       return { state: { kind: 'done' }, effects: [] };
   }
 }

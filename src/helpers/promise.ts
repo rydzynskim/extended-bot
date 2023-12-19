@@ -16,7 +16,3 @@ export function deferPromise<TReturn = void>(): {
     reject: rejectPromise,
   };
 }
-
-async function waitMs(timeMs: number): Promise<void> {
-  return new Promise<void>((resolve) => setTimeout(resolve, timeMs));
-}
