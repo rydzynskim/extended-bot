@@ -1,15 +1,10 @@
 import { exec } from 'child_process';
-import { deferPromise } from './promise';
 
 export function execAsync(cmd: string): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     exec(cmd, (err, stdout, stderr) => {
-      if (typeof stderr === 'string') {
-        reject(new Error(stderr));
-      }
-
-      if (typeof err !== 'undefined') {
-        reject(err);
+      if (err) {
+        resolve(err?.message ?? '');
       }
 
       resolve(stdout);

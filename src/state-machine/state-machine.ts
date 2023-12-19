@@ -1,5 +1,9 @@
 import { TTool, askModel, getAllTools } from '../model';
-import { waitForUserInput } from '../helpers';
+import {
+  startTaskExecutionDisplay,
+  stopTaskExecutionDisplay,
+  waitForUserInput,
+} from '../helpers';
 import {
   TEffect,
   TStateMachineEvents,
@@ -46,10 +50,12 @@ async function effectRunner(
       }
       break;
     case 'executeTask': {
-      // tell the extension server to do something
+      // run the task
+      const interval = startTaskExecutionDisplay(effect.request.method);
       const result = await effect.refMap[effect.request.method](
         effect.request.args
       );
+      stopTaskExecutionDisplay(interval);
 
       emitter.emit(
         'message',
