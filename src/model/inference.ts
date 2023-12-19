@@ -12,6 +12,7 @@ export async function askModel(
   tools: TTool[],
   attempt: number
 ): Promise<TModelResponse> {
+  // end if we tried too many times
   if (attempt > retryAttempts) {
     return { kind: 'respond', data: 'Error: Model unable to ' };
   }
@@ -19,20 +20,25 @@ export async function askModel(
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   // query the llm
-  const answer = await openai.chat.completions.create({
-    messages: [
-      {
-        role: 'user',
-        content: prePrompt,
-      },
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-    tools,
-    model: 'gpt-3.5-turbo-1106',
-  });
+  let answer: OpenAI.Chat.Completions.ChatCompletion | undefined = void 0;
+  try {
+    answer = await openai.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prePrompt,
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      tools,
+      model: 'gpt-3.5-turbo-1106',
+    });
+  } catch {
+    return askModel(prompt, tools, attempt + 1);
+  }
 
   // parse the response
   const { message } = answer.choices[0];

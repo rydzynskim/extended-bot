@@ -12,7 +12,6 @@ import { run } from './state-machine';
 // - extension specifies what we do with output, just return or give to model to summarize
 // - ability to run multiple tool calls in a row, output from one input into another
 // - stream responses
-// - gracefully handle network errors
 // - make it so the class methods don't have to be 'self contained'
 // - typecheck args in model response
 // - add coloring to the cli to make it easier to look at
