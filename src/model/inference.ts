@@ -25,7 +25,7 @@ export async function askModel(
     answer = await openai.chat.completions.create({
       messages: [
         {
-          role: 'user',
+          role: 'system',
           content: prePrompt,
         },
         {

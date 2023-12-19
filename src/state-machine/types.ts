@@ -5,6 +5,7 @@ export type TState =
   | { kind: 'start' }
   | { kind: 'waitingForTaskExecution' }
   | { kind: 'waitingForModelResponse' }
+  | { kind: 'waitingForExecutionVerification' }
   | { kind: 'waitingForUserResponse' }
   | { kind: 'done' };
 
@@ -20,6 +21,11 @@ export type TEffect =
   | { kind: 'requestUser'; request: string }
   | {
       kind: 'executeTask';
+      request: IExecutePayload;
+      refMap: Record<string, (...args: any[]) => any>;
+    }
+  | {
+      kind: 'askVerification';
       request: IExecutePayload;
       refMap: Record<string, (...args: any[]) => any>;
     }
@@ -41,7 +47,13 @@ export type TMessage =
       refMap: Record<string, (...args: any[]) => any>;
     }
   | { kind: 'userResponse'; response: string }
-  | { kind: 'executeTaskResponse'; response: string };
+  | { kind: 'executeTaskResponse'; response: string }
+  | {
+      kind: 'verification';
+      response: 'y' | 'n';
+      request: IExecutePayload;
+      refMap: Record<string, (...args: any[]) => any>;
+    };
 
 // the types of our events
 export type TStateMachineEvents = {
