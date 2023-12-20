@@ -29,7 +29,7 @@ async function effectRunner(
         });
 
         // request the inference model
-        const answer = await askModel(effect.prompt, tools, 0);
+        const answer = await askModel(effect.conversation, tools, 0);
 
         emitter.emit(
           'message',
@@ -79,8 +79,6 @@ async function effectRunner(
           {
             kind: 'verification',
             response,
-            request: effect.request,
-            refMap: effect.refMap,
           },
           emitter
         );
@@ -99,14 +97,19 @@ function update(
   switch (state.kind) {
     case 'start':
       if (message.kind === 'userResponse') {
+        state.conversation.push({
+          role: 'user',
+          content: message.response,
+        });
         return {
           state: {
             kind: 'waitingForModelResponse',
+            conversation: state.conversation,
           },
           effects: [
             {
               kind: 'requestModel',
-              prompt: message.response,
+              conversation: state.conversation,
             },
           ],
         };
@@ -116,9 +119,17 @@ function update(
       );
     case 'waitingForTaskExecution': {
       if (message.kind === 'executeTaskResponse') {
+        state.conversation.push({
+          role: 'tool',
+          content: message.response,
+          tool_call_id: state.id,
+        });
         return {
-          state: { kind: 'waitingForUserResponse' },
-          effects: [{ kind: 'requestUser', request: message.response }],
+          state: {
+            kind: 'waitingForModelResponse',
+            conversation: state.conversation,
+          },
+          effects: [{ kind: 'requestModel', conversation: state.conversation }],
         };
       }
       throw new Error(
@@ -131,18 +142,29 @@ function update(
         switch (message.response.kind) {
           case 'execute':
             return {
-              state: { kind: 'waitingForExecutionVerification' },
+              state: {
+                kind: 'waitingForExecutionVerification',
+                request: message.response.data,
+                refMap: message.refMap,
+                conversation: state.conversation,
+              },
               effects: [
                 {
                   kind: 'askVerification',
                   request: message.response.data,
-                  refMap: message.refMap,
                 },
               ],
             };
           case 'respond':
+            state.conversation.push({
+              role: 'assistant',
+              content: message.response.data,
+            });
             return {
-              state: { kind: 'waitingForUserResponse' },
+              state: {
+                kind: 'waitingForUserResponse',
+                conversation: state.conversation,
+              },
               effects: [
                 { kind: 'requestUser', request: message.response.data },
               ],
@@ -155,19 +177,43 @@ function update(
     case 'waitingForExecutionVerification':
       if (message.kind === 'verification') {
         if (message.response === 'y') {
+          state.conversation.push({
+            role: 'assistant',
+            content: null,
+            tool_calls: [
+              {
+                id: state.request.id,
+                type: 'function',
+                function: {
+                  name: state.request.method,
+                  arguments: JSON.stringify(state.request.args),
+                },
+              },
+            ],
+          });
           return {
-            state: { kind: 'waitingForTaskExecution' },
+            state: {
+              kind: 'waitingForTaskExecution',
+              conversation: state.conversation,
+              id: state.request.id,
+            },
             effects: [
               {
                 kind: 'executeTask',
-                request: message.request,
-                refMap: message.refMap,
+                request: state.request,
+                refMap: state.refMap,
               },
             ],
           };
         }
+        // if the user doesn't want to execute the task then
+        // pop off the last question they asked
+        state.conversation.pop();
         return {
-          state: { kind: 'waitingForUserResponse' },
+          state: {
+            kind: 'waitingForUserResponse',
+            conversation: state.conversation,
+          },
           effects: [
             {
               kind: 'requestUser',
@@ -184,9 +230,16 @@ function update(
         if (message.response === 'quit') {
           return { state: { kind: 'done' }, effects: [{ kind: 'quit' }] };
         }
+        state.conversation.push({
+          role: 'user',
+          content: message.response,
+        });
         return {
-          state: { kind: 'waitingForModelResponse' },
-          effects: [{ kind: 'requestModel', prompt: message.response }],
+          state: {
+            kind: 'waitingForModelResponse',
+            conversation: state.conversation,
+          },
+          effects: [{ kind: 'requestModel', conversation: state.conversation }],
         };
       }
       throw new Error(
@@ -200,7 +253,7 @@ function update(
 
 export async function run(): Promise<void> {
   // setup our message handler
-  let state: TState = { kind: 'start' };
+  let state: TState = { kind: 'start', conversation: [] };
   function messageHandler(
     message: TMessage,
     emitter: TypedEventEmitter<TStateMachineEvents>

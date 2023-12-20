@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { TModelResponse } from '../state-machine/types';
-import { TTool } from './types';
+import { TPromptMessages, TTool } from './types';
 
 const prePrompt =
   "If you don't have all the information required for the parameters of a tool, please ask the user for them before calling it.";
@@ -8,7 +8,7 @@ const prePrompt =
 const retryAttempts = 1;
 
 export async function askModel(
-  prompt: string,
+  prompt: TPromptMessages[],
   tools: TTool[],
   attempt: number
 ): Promise<TModelResponse> {
@@ -28,10 +28,7 @@ export async function askModel(
           role: 'system',
           content: prePrompt,
         },
-        {
-          role: 'user',
-          content: prompt,
-        },
+        ...prompt,
       ],
       tools,
       model: 'gpt-3.5-turbo-1106',
@@ -58,6 +55,7 @@ export async function askModel(
     kind: 'execute',
     data: {
       method: message.tool_calls[0]?.function.name,
+      id: message.tool_calls[0].id,
       args: JSON.parse(message.tool_calls[0]?.function.arguments ?? ''),
     },
   };

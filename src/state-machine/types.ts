@@ -1,23 +1,34 @@
 import EventEmitter from 'events';
+import { TPromptMessages } from '../model/types';
 
 // the states of our state machine
 export type TState =
-  | { kind: 'start' }
-  | { kind: 'waitingForTaskExecution' }
-  | { kind: 'waitingForModelResponse' }
-  | { kind: 'waitingForExecutionVerification' }
-  | { kind: 'waitingForUserResponse' }
+  | { kind: 'start'; conversation: TPromptMessages[] }
+  | {
+      kind: 'waitingForTaskExecution';
+      conversation: TPromptMessages[];
+      id: string;
+    }
+  | { kind: 'waitingForModelResponse'; conversation: TPromptMessages[] }
+  | {
+      kind: 'waitingForExecutionVerification';
+      refMap: Record<string, (...args: any[]) => any>;
+      request: IExecutePayload;
+      conversation: TPromptMessages[];
+    }
+  | { kind: 'waitingForUserResponse'; conversation: TPromptMessages[] }
   | { kind: 'done' };
 
 // the parameters needed to execute a task
 export interface IExecutePayload {
   method: string;
   args: Record<string, any>;
+  id: string;
 }
 
 // the kinds of effects our state machine can produce
 export type TEffect =
-  | { kind: 'requestModel'; prompt: string }
+  | { kind: 'requestModel'; conversation: TPromptMessages[] }
   | { kind: 'requestUser'; request: string }
   | {
       kind: 'executeTask';
@@ -27,7 +38,6 @@ export type TEffect =
   | {
       kind: 'askVerification';
       request: IExecutePayload;
-      refMap: Record<string, (...args: any[]) => any>;
     }
   | { kind: 'quit' };
 
@@ -51,8 +61,6 @@ export type TMessage =
   | {
       kind: 'verification';
       response: 'y' | 'n';
-      request: IExecutePayload;
-      refMap: Record<string, (...args: any[]) => any>;
     };
 
 // the types of our events
