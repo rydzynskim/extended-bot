@@ -1,4 +1,4 @@
-import { run } from './state-machine';
+import { run } from './state-machine/state-machine.js';
 
 // TODO:
 // - make the output of the chatbot more reliable and the parsing better (maybe do retries)
@@ -7,7 +7,7 @@ import { run } from './state-machine';
 // - stream responses
 // - make it so the class methods don't have to be 'self contained'
 // - typecheck args in model response
-// - add coloring to the cli to make it easier to look at
-// - fix spacing weirdness on newlines in console
+// - figure out good way to handle errors in the tools
+// - general code clean up and good comments
 
 run();

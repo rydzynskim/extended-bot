@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import { TModelResponse } from '../state-machine/types';
-import { TPromptMessages, TTool } from './types';
+import { TModelResponse } from '../state-machine/types.js';
+import { TPromptMessages, TTool } from './types.js';
 
 const prePrompt =
   "If you don't have all the information required for the parameters of a tool, please ask the user for them before calling it.";

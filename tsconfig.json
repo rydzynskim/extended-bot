@@ -2,9 +2,9 @@
   "include": ["src/**/*"],
   "compilerOptions": {
     "outDir": "./build",
-    "target": "es6",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "target": "es2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

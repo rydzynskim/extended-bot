@@ -1,4 +1,4 @@
-import { IMethod } from './types';
+import { IMethod } from './types.js';
 
 export abstract class BaseExtension {
   /**

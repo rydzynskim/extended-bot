@@ -20,9 +20,10 @@
   },
   "dependencies": {
     "@types/event-emitter": "^0.3.3",
-    "axios": "^1.5.0",
+    "chalk": "^5.3.0",
     "event-emitter": "^0.3.5",
     "openai": "^4.21.0",
-    "tiktoken": "^1.0.10"
-  }
+    "strip-ansi": "^7.1.0"
+  },
+  "type": "module"
 }

@@ -1,5 +1,6 @@
-import { IMethod, IMethodArg, extensions } from '../extensions';
-import { IToolInfo } from './types';
+import { IMethod, IMethodArg } from '../extensions/types.js';
+import { extensions } from '../extensions/tools/index.js';
+import { IToolInfo } from './types.js';
 
 function parseArg(args: IMethodArg[]): {
   type: 'object';

@@ -1,8 +1,8 @@
 import { access, writeFile, unlink } from 'node:fs/promises';
 import { resolve } from 'path';
-import { BaseExtension } from '../base-extension';
-import { IMethod } from '../types';
-import { execAsync } from '../../helpers/exec';
+import { BaseExtension } from '../base-extension.js';
+import { IMethod } from '../types.js';
+import { execAsync } from '../../helpers/exec.js';
 
 export class PythonExecutor extends BaseExtension {
   /**
@@ -27,7 +27,7 @@ export class PythonExecutor extends BaseExtension {
       }
     };
 
-    const tmpFile = resolve(__dirname, 'tmp.py');
+    const tmpFile = resolve(process.cwd(), 'tmp.py');
     try {
       // write the code to a temporary file
       await writeFile(tmpFile, input.code);

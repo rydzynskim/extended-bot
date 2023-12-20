@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { TPromptMessages } from '../model/types';
+import { TPromptMessages } from '../model/types.js';
 
 // the states of our state machine
 export type TState =
@@ -29,7 +29,7 @@ export interface IExecutePayload {
 // the kinds of effects our state machine can produce
 export type TEffect =
   | { kind: 'requestModel'; conversation: TPromptMessages[] }
-  | { kind: 'requestUser'; request: string }
+  | { kind: 'requestUser'; request: string; prefix: string }
   | {
       kind: 'executeTask';
       request: IExecutePayload;

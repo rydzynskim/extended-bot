@@ -1,16 +1,18 @@
-import { TTool, askModel, getAllTools } from '../model';
+import { askModel } from '../model/inference.js';
+import { getAllTools } from '../model/input-parser.js';
+import { TTool } from '../model/types.js';
 import {
   startTaskExecutionDisplay,
   stopTaskExecutionDisplay,
   waitForUserInput,
-} from '../helpers';
+} from '../helpers/cli.js';
 import {
   TEffect,
   TStateMachineEvents,
   TState,
   TMessage,
   TypedEventEmitter,
-} from './types';
+} from './types.js';
 
 async function effectRunner(
   effect: TEffect,
@@ -41,7 +43,7 @@ async function effectRunner(
     case 'requestUser':
       {
         // prompt the user and wait for them to say something
-        const prompt = await waitForUserInput(effect.request);
+        const prompt = await waitForUserInput(effect.request, effect.prefix);
 
         emitter.emit(
           'message',
@@ -57,7 +59,7 @@ async function effectRunner(
         const result = await effect.refMap[effect.request.method](
           effect.request.args
         );
-        stopTaskExecutionDisplay(interval);
+        stopTaskExecutionDisplay(interval, effect.request.method);
 
         emitter.emit(
           'message',
@@ -72,7 +74,9 @@ async function effectRunner(
         const question = `Would you like the model to call ${
           effect.request.method
         } with ${JSON.stringify(effect.request.args)}? [y|n]`;
-        const response = (await waitForUserInput(question)) as 'y' | 'n';
+        const response = (await waitForUserInput(question, 'SYSTEM')) as
+          | 'y'
+          | 'n';
 
         emitter.emit(
           'message',
@@ -166,7 +170,11 @@ function update(
                 conversation: state.conversation,
               },
               effects: [
-                { kind: 'requestUser', request: message.response.data },
+                {
+                  kind: 'requestUser',
+                  request: message.response.data,
+                  prefix: 'MODEL',
+                },
               ],
             };
         }
@@ -218,6 +226,7 @@ function update(
             {
               kind: 'requestUser',
               request: 'Aborting Execution. Please input a new prompt.',
+              prefix: 'SYSTEM',
             },
           ],
         };
@@ -272,7 +281,8 @@ export async function run(): Promise<void> {
 
   // wait for user prompt and start the state machine
   const initialPrompt = await waitForUserInput(
-    'Hi, welcome to the extend chatbot. How can I help you today?'
+    'Hi, welcome to the extend chatbot. How can I help you today?',
+    'MODEL'
   );
   messageHandler({ kind: 'userResponse', response: initialPrompt }, emitter);
 }
