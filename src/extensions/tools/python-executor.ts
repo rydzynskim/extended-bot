@@ -51,8 +51,7 @@ export class PythonExecutor extends BaseExtension {
   public getExtensionInfo(): IMethod[] {
     return [
       {
-        description:
-          'Run python code, assume no external libraries are available.',
+        description: 'Run python code.',
         name: 'executePython',
         args: [
           {

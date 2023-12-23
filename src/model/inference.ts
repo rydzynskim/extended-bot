@@ -1,9 +1,10 @@
 import OpenAI from 'openai';
 import { TModelResponse } from '../state-machine/types.js';
 import { TPromptMessages, TTool } from './types.js';
+import { trimConversation } from './tokens.js';
 
 const prePrompt =
-  "If you don't have all the information required for the parameters of a tool, please ask the user for them before calling it.";
+  "Don't call a tool unless the user explicitly asks you to call a tool. If you don't have all the information required for the parameters of a tool, please ask the user for them before calling it.";
 
 const retryAttempts = 1;
 
@@ -14,8 +15,16 @@ export async function askModel(
 ): Promise<TModelResponse> {
   // end if we tried too many times
   if (attempt > retryAttempts) {
-    return { kind: 'respond', data: 'Error: Model unable to ' };
+    return {
+      kind: 'respond',
+      data: 'Error: Model unable to produce output, please try again.',
+    };
   }
+
+  // trim the conversation history if it is over the allowable
+  // token input for the model
+  trimConversation(prePrompt, prompt, tools);
+
   // get our open ai key from environment vars
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -60,9 +69,3 @@ export async function askModel(
     },
   };
 }
-
-// helpful resource for counting tokens
-// https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
-// const encoding = tiktoken.encoding_for_model('gpt-3.5-turbo');
-// const test = encoding.encode('');
-// console.log(test.length);
