@@ -49,6 +49,18 @@ function countToolTokens(tools: TTool[]): number {
 }
 
 /**
+ * Given the pre-prompt, the conversation, and the tools, returns the
+ * number of tokens that will be present in input to the model
+ */
+export function countAllTokens(
+  prePrompt: string,
+  prompt: TPromptMessages[],
+  tools: TTool[]
+): number {
+  return countPromptTokens(prePrompt, prompt) + countToolTokens(tools);
+}
+
+/**
  * Given the conversation so far, trims the prompt so that:
  * ```
  * context_window-output_tokens>tokens(input)

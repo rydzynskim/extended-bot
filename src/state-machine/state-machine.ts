@@ -1,4 +1,4 @@
-import { askModel } from '../model/inference.js';
+import { askModel, prePrompt } from '../model/inference.js';
 import { getAllTools } from '../model/input-parser.js';
 import { TTool } from '../model/types.js';
 import {
@@ -8,6 +8,7 @@ import {
   systemLog,
 } from '../helpers/cli.js';
 import { TEffect, TState, TMessage, emitter } from './types.js';
+import { countAllTokens } from '../model/tokens.js';
 
 async function effectRunner(effect: TEffect): Promise<void> {
   switch (effect.kind) {
@@ -30,6 +31,43 @@ async function effectRunner(effect: TEffect): Promise<void> {
           response: answer,
           refMap,
         });
+      }
+      break;
+    case 'showPromptTokenCount':
+      {
+        // calculate the tokens used in the input
+        const toolInformation = getAllTools();
+        const tools: TTool[] = [];
+        Object.values(toolInformation).forEach((entry) => {
+          tools.push(entry.tool);
+        });
+
+        // log to user and wait for new prompt
+        const prompt = await waitForUserInput(
+          `The input has ${countAllTokens(
+            prePrompt,
+            effect.conversation,
+            tools
+          )}`,
+          'SYSTEM'
+        );
+
+        emitter.emit('message', { kind: 'userResponse', response: prompt });
+      }
+      break;
+    case 'clearConversationHistory':
+      {
+        while (effect.conversation.length > 0) {
+          effect.conversation.pop();
+        }
+
+        // log to user and wait for new prompt
+        const prompt = await waitForUserInput(
+          'The conversation history has been cleared',
+          'SYSTEM'
+        );
+
+        emitter.emit('message', { kind: 'userResponse', response: prompt });
       }
       break;
     case 'requestUser':
@@ -230,6 +268,34 @@ function update(
       if (message.kind === 'userResponse') {
         if (message.response === 'quit') {
           return { state: { kind: 'done' }, effects: [{ kind: 'quit' }] };
+        }
+        if (message.response === 'clear') {
+          return {
+            state: {
+              kind: 'waitingForUserResponse',
+              conversation: state.conversation,
+            },
+            effects: [
+              {
+                kind: 'clearConversationHistory',
+                conversation: state.conversation,
+              },
+            ],
+          };
+        }
+        if (message.response === 'show') {
+          return {
+            state: {
+              kind: 'waitingForUserResponse',
+              conversation: state.conversation,
+            },
+            effects: [
+              {
+                kind: 'showPromptTokenCount',
+                conversation: state.conversation,
+              },
+            ],
+          };
         }
         state.conversation.push({
           role: 'user',

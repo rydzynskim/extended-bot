@@ -39,6 +39,11 @@ export type TEffect =
       kind: 'askVerification';
       request: IExecutePayload;
     }
+  | {
+      kind: 'clearConversationHistory';
+      conversation: TPromptMessages[];
+    }
+  | { kind: 'showPromptTokenCount'; conversation: TPromptMessages[] }
   | { kind: 'quit' };
 
 // the kinds of responses we expect from the model
