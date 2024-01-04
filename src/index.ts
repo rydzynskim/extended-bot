@@ -1,6 +1,8 @@
 import { run } from './state-machine/state-machine.js';
 
 // TODO:
-// - typecheck args in model response
+// - add special commands to user input
+//   - clear conversation history
+//   - see the token length of conversation history
 
 run();

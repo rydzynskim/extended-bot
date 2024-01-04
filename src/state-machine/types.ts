@@ -65,8 +65,8 @@ export type TMessage =
 
 // the types of our events
 export type TStateMachineEvents = {
-  message: [message: TMessage, emitter: TypedEventEmitter<TStateMachineEvents>];
-  effect: [effect: TEffect, emitter: TypedEventEmitter<TStateMachineEvents>];
+  message: [message: TMessage];
+  effect: [effect: TEffect];
 };
 
 // some fancy typescript to get type saftey on our events
@@ -95,3 +95,5 @@ export class TypedEventEmitter<TEvents extends Record<string, any>> {
     this.emitter.off(eventName, handler as any);
   }
 }
+
+export const emitter = new TypedEventEmitter<TStateMachineEvents>();

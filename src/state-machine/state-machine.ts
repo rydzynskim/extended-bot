@@ -7,18 +7,9 @@ import {
   waitForUserInput,
   systemLog,
 } from '../helpers/cli.js';
-import {
-  TEffect,
-  TStateMachineEvents,
-  TState,
-  TMessage,
-  TypedEventEmitter,
-} from './types.js';
+import { TEffect, TState, TMessage, emitter } from './types.js';
 
-async function effectRunner(
-  effect: TEffect,
-  emitter: TypedEventEmitter<TStateMachineEvents>
-): Promise<void> {
+async function effectRunner(effect: TEffect): Promise<void> {
   switch (effect.kind) {
     case 'requestModel':
       {
@@ -34,11 +25,11 @@ async function effectRunner(
         // request the inference model
         const answer = await askModel(effect.conversation, tools, 0);
 
-        emitter.emit(
-          'message',
-          { kind: 'modelResponse', response: answer, refMap },
-          emitter
-        );
+        emitter.emit('message', {
+          kind: 'modelResponse',
+          response: answer,
+          refMap,
+        });
       }
       break;
     case 'requestUser':
@@ -46,11 +37,7 @@ async function effectRunner(
         // prompt the user and wait for them to say something
         const prompt = await waitForUserInput(effect.request, effect.prefix);
 
-        emitter.emit(
-          'message',
-          { kind: 'userResponse', response: prompt },
-          emitter
-        );
+        emitter.emit('message', { kind: 'userResponse', response: prompt });
       }
       break;
     case 'executeTask':
@@ -71,11 +58,10 @@ async function effectRunner(
           systemLog(`An error occured while using extension: ${result}`);
         }
 
-        emitter.emit(
-          'message',
-          { kind: 'executeTaskResponse', response: result },
-          emitter
-        );
+        emitter.emit('message', {
+          kind: 'executeTaskResponse',
+          response: result,
+        });
       }
       break;
     case 'askVerification':
@@ -88,14 +74,10 @@ async function effectRunner(
           | 'y'
           | 'n';
 
-        emitter.emit(
-          'message',
-          {
-            kind: 'verification',
-            response,
-          },
-          emitter
-        );
+        emitter.emit('message', {
+          kind: 'verification',
+          response,
+        });
       }
       break;
     case 'quit':
@@ -273,19 +255,15 @@ function update(
 export async function run(): Promise<void> {
   // setup our message handler
   let state: TState = { kind: 'start', conversation: [] };
-  function messageHandler(
-    message: TMessage,
-    emitter: TypedEventEmitter<TStateMachineEvents>
-  ): void {
+  function messageHandler(message: TMessage): void {
     const result = update(state, message);
     for (const effect of result.effects) {
-      emitter.emit('effect', effect, emitter);
+      emitter.emit('effect', effect);
     }
     state = result.state;
   }
 
   // create event emitter instance and attach listeners
-  const emitter = new TypedEventEmitter<TStateMachineEvents>();
   emitter.on('message', messageHandler);
   emitter.on('effect', effectRunner);
 
@@ -294,5 +272,5 @@ export async function run(): Promise<void> {
     'Hi, welcome to the extend chatbot. How can I help you today?',
     'MODEL'
   );
-  messageHandler({ kind: 'userResponse', response: initialPrompt }, emitter);
+  messageHandler({ kind: 'userResponse', response: initialPrompt });
 }

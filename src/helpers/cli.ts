@@ -57,6 +57,7 @@ export async function waitForUserInput(
 
   return new Promise((resolve) => {
     readline.question(formattedPrompt, (answer) => {
+      readline.close();
       resolve(answer);
     });
   });
