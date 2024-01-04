@@ -35,6 +35,11 @@ export function stopTaskExecutionDisplay(
   );
 }
 
+export function systemLog(log: string): void {
+  // eslint-disable-next-line no-console
+  console.log(chalk.yellowBright(`[SYSTEM] ${log}`));
+}
+
 export async function waitForUserInput(
   prompt: string,
   prefix: string

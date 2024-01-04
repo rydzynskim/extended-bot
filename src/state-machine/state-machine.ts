@@ -5,6 +5,7 @@ import {
   startTaskExecutionDisplay,
   stopTaskExecutionDisplay,
   waitForUserInput,
+  systemLog,
 } from '../helpers/cli.js';
 import {
   TEffect,
@@ -56,10 +57,19 @@ async function effectRunner(
       {
         // run the task
         const interval = startTaskExecutionDisplay(effect.request.method);
-        const result = await effect.refMap[effect.request.method](
-          effect.request.args
-        );
-        stopTaskExecutionDisplay(interval, effect.request.method);
+        let result = '';
+        try {
+          result = await effect.refMap[effect.request.method](
+            effect.request.args
+          );
+          stopTaskExecutionDisplay(interval, effect.request.method);
+        } catch (error) {
+          if (error instanceof Error) {
+            result = error.message;
+          }
+          stopTaskExecutionDisplay(interval, effect.request.method);
+          systemLog(`An error occured while using extension: ${result}`);
+        }
 
         emitter.emit(
           'message',

@@ -29,7 +29,7 @@ function countToolTokens(tools: TTool[]): number {
 
   let total = 0;
   for (const tool of tools) {
-    const properties = tool.function.parameters.properties as any;
+    const properties = tool.function.parameters?.properties as any;
     const descriptionCount = encoding.encode(
       tool.function.description ?? ''
     ).length;

@@ -1,5 +1,5 @@
 {
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "index.d.ts"],
   "compilerOptions": {
     "outDir": "./build",
     "target": "es2022",

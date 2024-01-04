@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { TModelResponse } from '../state-machine/types.js';
 import { TPromptMessages, TTool } from './types.js';
 import { trimConversation } from './tokens.js';
+import { systemLog } from '../helpers/cli.js';
 
 const prePrompt =
   "Don't call a tool unless the user explicitly asks you to call a tool. If you don't have all the information required for the parameters of a tool, please ask the user for them before calling it.";
@@ -31,6 +32,7 @@ export async function askModel(
   // query the llm
   let answer: OpenAI.Chat.Completions.ChatCompletion | undefined = void 0;
   try {
+    systemLog('waiting for model response...');
     answer = await openai.chat.completions.create({
       messages: [
         {

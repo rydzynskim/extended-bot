@@ -28,24 +28,14 @@ export class PythonExecutor extends BaseExtension {
     };
 
     const tmpFile = resolve(process.cwd(), 'tmp.py');
-    try {
-      // write the code to a temporary file
-      await writeFile(tmpFile, input.code);
-      // execute the code
-      const output = await execAsync(`python3 ${tmpFile}`);
-      // clean up the file
-      await deleteFileIfExists(tmpFile);
+    // write the code to a temporary file
+    await writeFile(tmpFile, input.code);
+    // execute the code
+    const output = await execAsync(`python3 ${tmpFile}`);
+    // clean up the file
+    await deleteFileIfExists(tmpFile);
 
-      return output;
-    } catch (error) {
-      await deleteFileIfExists(tmpFile);
-
-      if (error instanceof Error) {
-        return error.message;
-      }
-
-      return '';
-    }
+    return output;
   }
 
   public getExtensionInfo(): IMethod[] {
